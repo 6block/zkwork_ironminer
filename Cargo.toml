@@ -1,0 +1,40 @@
+[package]
+name = "zkwork_ironminer"
+version = "0.1.0"
+edition = "2021"
+authors = [ "The zk.work team <zk.work@6block.com>" ]
+homepage = "https://zk.work"
+default-run = "zkwork_ironminer"
+keywords = [
+    "zk.work",
+    "ironfish",
+    "cryptography",
+    "blockchain",
+    "miner"
+]
+license = "MPL-2.0"
+
+[dependencies]
+anyhow = "1"
+bincode = "1"
+bytes = "1"
+clap = { version = "3.2.5", features = ["derive"] }
+futures = "0.3"
+hex = "0.4.3"
+ironfish_rust = { path = "./ironfish/ironfish-rust", features = ["native"] }
+log = "0.4.8"
+num_cpus = "1.13.1"
+pretty_env_logger = "0.3"
+ringbuffer = "0.8.4"
+serde = { version = "1.0.89", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0.64", default-features = false, features = ["alloc"] }
+signal-hook = "0.3"
+signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"] }
+tokio = { version = "1.20.0", features = ["full"] }
+tokio-stream = "0.1.9"
+tokio-util = { version = "0.7.3", features = ["codec"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+incremental = true
