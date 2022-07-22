@@ -1,0 +1,13 @@
+[Unit]
+Description=ironfish miner daemon
+
+[Service]
+User=root
+WorkingDirectory=/root
+Restart=always
+StandardOutput=file:/root/ironminer.log
+StandardError=file:/root/ironminer.log
+ExecStart=/root/run_ironminer.sh
+
+[Install]
+WantedBy=multi-user.target
