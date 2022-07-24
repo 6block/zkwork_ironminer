@@ -13,6 +13,7 @@ use tokio_util::codec::{Decoder, Encoder};
 #[allow(non_snake_case)]
 pub struct MiningSubscribeBody {
     pub version: i64,
+    pub name: String,
     pub publicAddress: String,
 }
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]

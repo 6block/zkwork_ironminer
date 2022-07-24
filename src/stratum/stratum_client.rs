@@ -184,6 +184,7 @@ impl StratumClient {
                     method: String::from("mining.subscribe"),
                     body: MiningSubscribeBody {
                         version: 1,
+                        name: client.config.worker_name.clone(),
                         publicAddress: client.config.public_address.clone(),
                     },
                 },
