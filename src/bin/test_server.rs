@@ -32,13 +32,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 body:
                     MiningSubscribeBody {
                         version,
+                        name,
                         publicAddress: public_address,
                     },
             }) = message
             {
                 info!(
-                    "id({}) method({}) version({}) public address({})",
-                    id, method, version, public_address
+                    "id({}) method({}) version({}) worker_name({}) public address({})",
+                    id, method, version, name, public_address
                 );
                 // "mining.subscribed"
                 let subscribed_message =
