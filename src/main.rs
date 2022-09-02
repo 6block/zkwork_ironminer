@@ -6,11 +6,13 @@ use anyhow::Result;
 use clap::Parser;
 use futures::stream::StreamExt;
 use log::*;
-use signal_hook::consts::*;
-use signal_hook_tokio::Signals;
 use std::{sync::Arc, time::Duration};
 use tokio::{runtime, sync::oneshot, task};
 use zkwork_ironminer::{cli::Cli, Miner};
+#[cfg(not(windows))]
+use signal_hook::consts::*;
+#[cfg(not(windows))]
+use signal_hook_tokio::Signals;
 
 fn main() -> Result<()> {
     pretty_env_logger::init_timed();
@@ -34,6 +36,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[cfg(not(windows))]
 // This function is responsible for handling OS signals in order for the node to be able to intercept them
 // and perform a clean shutdown.
 async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
@@ -56,5 +59,11 @@ async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
     });
     let _ = handler.await;
     debug!("install signals handle");
+    Ok(())
+}
+
+#[cfg(windows)]
+// No signal handling available on Windows for now
+async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
     Ok(())
 }
