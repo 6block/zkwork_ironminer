@@ -65,5 +65,21 @@ async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
 #[cfg(windows)]
 // No signal handling available on Windows for now
 async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
+    let (router, handler) = oneshot::channel();
+    task::spawn(async move {
+        let _ = router.send(());
+        match tokio::signal::ctrl_c().await {
+            Ok(()) => {
+                info!("shutdowning...");
+                miner.stop().await;
+                tokio::time::sleep(Duration::from_millis(5000)).await;
+                info!("goodbye");
+                std::process::exit(0);
+            }
+            Err(error) => error!("tokio::signal::ctrl_c encountered an error: {}", error),
+        }
+    });
+    let _ = handler.await;
+    debug!("install signals handle");
     Ok(())
 }
