@@ -4,15 +4,10 @@
 
 use anyhow::Result;
 use clap::Parser;
-use futures::stream::StreamExt;
 use log::*;
 use std::{sync::Arc, time::Duration};
 use tokio::{runtime, sync::oneshot, task};
 use zkwork_ironminer::{cli::Cli, Miner};
-#[cfg(unix)]
-use signal_hook::consts::*;
-#[cfg(unix)]
-use signal_hook_tokio::Signals;
 
 fn main() -> Result<()> {
     pretty_env_logger::init_timed();
@@ -36,34 +31,24 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
-// This function is responsible for handling OS signals in order for the node to be able to intercept them
-// and perform a clean shutdown.
+// Handles OS signals for the node to intercept and perform a clean shutdown.
+// Note: Only Ctrl-C is supported; it should work on both Unix-family systems and Windows.
 async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
-    let mut signals = Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT])?;
     let (router, handler) = oneshot::channel();
     task::spawn(async move {
         let _ = router.send(());
-        while let Some(signal) = signals.next().await {
-            match signal {
-                SIGTERM | SIGINT | SIGQUIT => {
-                    info!("shutdowning...");
-                    miner.stop().await;
-                    tokio::time::sleep(Duration::from_millis(5000)).await;
-                    info!("goodbye");
-                    std::process::exit(0);
-                }
-                _ => unreachable!(),
+        match tokio::signal::ctrl_c().await {
+            Ok(()) => {
+                info!("shutdowning...");
+                miner.stop().await;
+                tokio::time::sleep(Duration::from_millis(5000)).await;
+                info!("goodbye");
+                std::process::exit(0);
             }
+            Err(error) => error!("tokio::signal::ctrl_c encountered an error: {}", error),
         }
     });
     let _ = handler.await;
     debug!("install signals handle");
-    Ok(())
-}
-
-#[cfg(windows)]
-// No signal handling available on Windows for now
-async fn handle_signals(miner: Arc<Miner>) -> Result<()> {
     Ok(())
 }

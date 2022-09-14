@@ -32,10 +32,6 @@ tokio = { version = "1.20.0", features = ["full"] }
 tokio-stream = "0.1.9"
 tokio-util = { version = "0.7.3", features = ["codec"] }
 
-[target.'cfg(unix)'.dependencies]
-signal-hook = "0.3"
-signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"] }
-
 [profile.release]
 opt-level = 3
 lto = "thin"
