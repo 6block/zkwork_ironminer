@@ -134,7 +134,7 @@ impl Miner {
                         if let Some((randomness, mining_request_id)) = block_result {
                             info!(
                                 "Found share: randomness({}) mining_request_id({}) {} .",
-                                randomness,
+                                hex::encode(randomness.to_be_bytes()),
                                 mining_request_id,
                                 Meter::format(miner.hashrare.get_rate_1s().await),
                              );
