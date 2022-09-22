@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RUST_LOG=debug
+export RUST_LOG=info
 
 # change config
 pool=36.189.234.195:60006
