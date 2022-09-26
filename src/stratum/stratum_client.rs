@@ -25,6 +25,7 @@ use tokio::{
     sync::{mpsc, oneshot, RwLock},
     task,
 };
+use tokio_native_tls::{native_tls, TlsConnector};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, FramedWrite};
 
@@ -39,10 +40,12 @@ enum StratumClientRequest {
 
 #[derive(Clone, Debug)]
 pub struct StratumClientConfig {
+    pub tls: bool,
     pub pool_address: SocketAddr,
     pub public_address: String,
     pub worker_name: String,
 }
+
 #[derive(Debug)]
 pub struct StratumClient {
     config: StratumClientConfig,
@@ -129,9 +132,34 @@ impl StratumClient {
             'outer: loop {
                 info!("Connecting to pool({})...", client.config.pool_address);
                 let mut connect_warned = false;
-                let stream = loop {
-                    if let Ok(stream) = TcpStream::connect(client.config.pool_address).await {
-                        break stream;
+                loop {
+                    if let Ok(tcp_stream) = TcpStream::connect(client.config.pool_address).await {
+                        if client.config.tls {
+                            let mut native_tls_builder = native_tls::TlsConnector::builder();
+                            native_tls_builder.danger_accept_invalid_certs(true);
+                            native_tls_builder.danger_accept_invalid_hostnames(true);
+                            native_tls_builder.use_sni(false);
+                            let native_tls_connector = native_tls_builder.build().unwrap();
+                            let tokio_tls_connector = TlsConnector::from(native_tls_connector);
+                            if let Ok(tls_stream) = tokio_tls_connector
+                                .connect(&client.config.pool_address.to_string(), tcp_stream)
+                                .await
+                            {
+                                if Self::handle_stratum_connect(client.clone(), tls_stream)
+                                    .await
+                                    .is_err()
+                                {
+                                    break;
+                                }
+                            }
+                        } else {
+                            if Self::handle_stratum_connect(client.clone(), tcp_stream)
+                                .await
+                                .is_err()
+                            {
+                                break;
+                            }
+                        }
                     }
                     if client.stopped.load(Ordering::Relaxed) {
                         break 'outer;
@@ -144,15 +172,6 @@ impl StratumClient {
                         connect_warned = true;
                     }
                     tokio::time::sleep(Duration::from_secs(2)).await;
-                };
-
-                info!("Connect pool success({})", client.config.pool_address);
-                // process net message
-                if Self::handle_io_message(client.clone(), stream)
-                    .await
-                    .is_err()
-                {
-                    break;
                 }
                 // current link is closed, so reset stratum status
                 client.subscribed.store(false, Ordering::SeqCst);
@@ -167,6 +186,15 @@ impl StratumClient {
         let _ = handler.await;
     }
 
+    async fn handle_stratum_connect<T: AsyncRead + AsyncWrite>(
+        client: Arc<Self>,
+        stream: T,
+    ) -> Result<()> {
+        info!("Connect pool success({})", client.config.pool_address);
+        // process net message
+        Self::handle_io_message(client, stream).await?;
+        Ok(())
+    }
     async fn handle_io_message<T: AsyncRead + AsyncWrite>(
         client: Arc<Self>,
         stream: T,
