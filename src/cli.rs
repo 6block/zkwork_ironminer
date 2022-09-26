@@ -24,4 +24,7 @@ pub struct Cli {
     /// Specify batch size
     #[clap(long = "batch_size", default_value_t = 10000)]
     pub batch_size: u32,
+    /// Connect to server over tls
+    #[clap(long = "tls", default_value_t = false)]
+    pub tls: bool,
 }

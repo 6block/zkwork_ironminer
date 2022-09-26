@@ -42,6 +42,7 @@ pub struct Miner {
 impl Miner {
     pub async fn initialize(cli: Cli) -> Arc<Self> {
         let stratum_client_config = StratumClientConfig {
+            tls: cli.tls,
             pool_address: cli.pool,
             public_address: cli.address.clone(),
             worker_name: cli.worker_name.clone(),

@@ -29,6 +29,7 @@ ringbuffer = "0.8.4"
 serde = { version = "1.0.89", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0.64", default-features = false, features = ["alloc"] }
 tokio = { version = "1.20.0", features = ["full"] }
+tokio-native-tls = "0.3.0"
 tokio-stream = "0.1.9"
 tokio-util = { version = "0.7.3", features = ["codec"] }
 
