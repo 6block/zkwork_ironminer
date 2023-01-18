@@ -81,7 +81,7 @@ impl Miner {
             mining_request_id
         );
         let mut header_bytes = hex::decode(header).unwrap();
-        header_bytes[176..176 + 32].copy_from_slice(self.graffiti.read().await.unwrap().as_slice());
+        header_bytes[148..148 + 32].copy_from_slice(self.graffiti.read().await.unwrap().as_slice());
         self.waiting.store(false, Ordering::SeqCst);
 
         let request =
